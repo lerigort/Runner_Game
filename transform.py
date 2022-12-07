@@ -16,7 +16,7 @@ def transform_perspective(self, x, y):
     diff_x = x - self.coord_perspective_x
 
     modif_y = diff_y / self.coord_perspective_y
-    modif_y = pow(modif_y, 1)
+    modif_y = pow(modif_y, 2.5)
 
     per_x = self.coord_perspective_x + diff_x * modif_y
     per_y = self.coord_perspective_y - modif_y * self.coord_perspective_y

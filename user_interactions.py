@@ -22,9 +22,15 @@ def on_keyboard_up(self, keyboard, keycode):
 
 
 def on_keyboard_down(self, keyboard, keycode, text, modifiers):
+    slide_in_pixels = self.SPEED_X * self.width
+
     if keycode[1] == 'd':
-        self.current_speed_x = self.SPEED_X
+        self.current_speed_x = -slide_in_pixels
     elif keycode[1] == 'a':
-        self.current_speed_x = -self.SPEED_X
+        self.current_speed_x = slide_in_pixels
+    elif keycode[1] == "right":
+        self.current_speed_x = -slide_in_pixels
+    elif keycode[1] == 'left':
+        self.current_speed_x = slide_in_pixels
 
     return True
