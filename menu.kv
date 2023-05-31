@@ -5,10 +5,46 @@
         Rectangle:
             size: self.size
     Label:
-        text: "LABEL"
+        font_size: dp(60)
+        font_name: "fonts/loud-noise-skew.ttf"
+        text: root.parent.menu_title
         pos_hint: {"center_x": 0.5, "center_y": 0.6}
     Button:
-        text: "ok"
-        pos_hint: {"center_x": 0.5, "center_y": 0.4}
-        size_hint: .2, .1
+        id: root.parent.start_button
+        font_size: dp(35)
+        font_name: "fonts/press-start-k.ttf"
+        text: root.parent.menu_button_title
+        pos_hint: {"center_x": 0.5, "center_y": 0.30}
+        size_hint: .22, .11
         on_press: root.parent.button_clicked()
+
+    Button:
+        id: speed_button_very_slow
+        font_name: "fonts/press-start-k.ttf"
+        text: "Very Slow"
+        pos_hint: {"center_x": 0.3, "center_y": 0.15}
+        size_hint: .15, .11
+        on_press: root.parent.on_button_change_speed(self)
+
+    Button:
+        id: speed_button_slow
+        font_name: "fonts/press-start-k.ttf"
+        text: "Slow"
+        pos_hint: {"center_x": 0.5, "center_y": 0.12}
+        size_hint: .15, .11
+        on_press: root.parent.on_button_change_speed(self)
+
+    Button:
+        font_name: "fonts/press-start-k.ttf"
+        text: "Runnin\nin the 90s"
+        pos_hint: {"center_x": 0.7, "center_y": 0.15}
+        size_hint: .15, .11
+        on_press: root.parent.on_button_change_speed(self)
+    Label:
+        font_name: "fonts/press-start-k.ttf"
+        font_size: dp(12)
+        text: root.parent.label_chosen_speed
+        pos_hint: {"center_x": 0.06, "center_y": 0.95}
+
+
+

@@ -3,6 +3,16 @@
 MainWidget:
 
 <MainWidget>:
+    canvas.before:
+        Color:
+            a: 0.65
+        Rectangle:
+            size: self.size
+            source: "images/wallpapersden.com_k-nebula-space_3840x1920.jpg"
+
+    menu_widget: menu_widget
     coord_perspective_x: self.width/2
     coord_perspective_y: self.height*0.75
+
     MenuWidget:
+        id: menu_widget

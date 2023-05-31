@@ -3,7 +3,9 @@ import random
 from kivy import Config, platform
 from kivy.lang import Builder
 from kivy.metrics import dp
+from kivy.uix.modalview import ModalView
 from kivy.uix.relativelayout import RelativeLayout
+from kivy.uix.togglebutton import ToggleButton
 
 Config.set("graphics", "width", "1200")
 Config.set("graphics", "height", "500")
@@ -11,7 +13,7 @@ Config.set("graphics", "height", "500")
 from kivy.core.window import Window
 from kivy.app import App
 from kivy.graphics import Line, Color, Ellipse, Bezier, Quad, Triangle
-from kivy.properties import NumericProperty, Clock
+from kivy.properties import NumericProperty, Clock, ObjectProperty, StringProperty
 from kivy.uix.widget import Widget
 
 Builder.load_file("menu.kv")
@@ -33,7 +35,7 @@ class MainWidget(RelativeLayout):
     horizontal_lines = []
 
     current_offset_y = 0
-    SPEED = 0.3 / 60  # ship constantly travels 50% of screen per second
+    ship_speed = 0.5 / 60  # ship constantly travels 50% of screen per second
 
     current_offset_x = 0
     SPEED_X = 0.7 / 60  # ship can slide up to 70% of screen per second
@@ -44,11 +46,21 @@ class MainWidget(RelativeLayout):
     current_loop = 0
     tiles_coordinates = []
 
+    ship_shadow = None
     ship = None
     ship_positions = []
     SHIP_WIDTH = 0.1
     SHIP_HEIGHT = 0.043
     ship_y_pos = 0.1
+
+    menu_widget = ObjectProperty()
+
+    label_chosen_speed = StringProperty("speed: \n Slow")
+
+    chosen_difficulty = 1  # medium by default, look speed functions
+    menu_button_title = StringProperty("START")
+    menu_title = StringProperty("D E    G A M E")
+    text_animate_iterator = 0
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
@@ -61,7 +73,23 @@ class MainWidget(RelativeLayout):
             self._keyboard = Window.request_keyboard(self.keyboard_closed, self)
             self._keyboard.bind(on_key_down=self.on_keyboard_down)
             self._keyboard.bind(on_key_up=self.on_keyboard_up)
+
+        # self._trigger = Clock.create_trigger(self.reset_game())
         Clock.schedule_interval(self.update, 1 / 60)
+        Clock.schedule_interval(self.increment_speed, 35)
+
+    def reset_game(self):
+        self.current_offset_y = 0
+        self.current_offset_x = 0
+        self.current_speed_x = 0
+        self.current_loop = 0
+        self.tiles_coordinates = []
+
+        self.ship_y_pos = 0.1
+        self.init_tile_coord()
+        self.set_speed()
+
+        self.is_game_over = False
 
     def is_desktop(self):
         if platform in ("win", "linux", "macosx"):
@@ -70,16 +98,19 @@ class MainWidget(RelativeLayout):
 
     def init_vertical_lines(self):
         with self.canvas:
+            Color(1, 1, 1, 0.3)
             for i in range(self.V_LINES_AMOUNT):
                 self.vertical_lines.append(Line())
 
     def init_tiles(self):
         with self.canvas:
+            Color(1, 1, 1, 0.45)
             for i in range(self.QUAD_AMOUNT):
                 self.tiles.append(Quad())
 
     def init_horizontal_lines(self):
         with self.canvas:
+            Color(1, 1, 1, 0.3)
             for i in range(self.H_LINES_AMOUNT):
                 self.horizontal_lines.append(Line())
 
@@ -89,8 +120,10 @@ class MainWidget(RelativeLayout):
 
     def init_ship(self):
         with self.canvas:
-            Color(0, 0, 0)
+            Color(0, 0, 0, 0.95)
             self.ship = Triangle()
+            Color(0, 0, 0, 0.15)
+            self.ship_shadow = Triangle()
 
     def ship_update(self):
         ship_width_in_pixels = self.width * self.SHIP_WIDTH
@@ -111,6 +144,10 @@ class MainWidget(RelativeLayout):
         x3, y3 = self.transform(*self.ship_positions[2])
 
         self.ship.points = [x1, y1, x2, y2, x3, y3]
+
+        shdw_x = self.width * 0.005
+        shdw_y = -self.height * 0.013
+        self.ship_shadow.points = [x1+shdw_x, y1+shdw_y, x2+shdw_x, y2+shdw_y, x3+shdw_x, y3+shdw_y]
 
     def is_ship_on_track(self) -> bool:
         for i in range(len(self.tiles_coordinates)):
@@ -234,10 +271,11 @@ class MainWidget(RelativeLayout):
         self.ship_update()
         if not self.is_ship_on_track() and not self.is_game_over:
             self.is_game_over = True
+            self.menu_widget.opacity = 1
         time_factor = dt * 60
 
         if not self.is_game_over and self.is_game_started:
-            speed_in_pixels = self.SPEED * self.height
+            speed_in_pixels = self.ship_speed * self.height
             self.current_offset_y += speed_in_pixels * time_factor
             self.current_offset_x += self.current_speed_x * time_factor
 
@@ -248,8 +286,43 @@ class MainWidget(RelativeLayout):
                 self.clear_tile_coord()
                 self.create_tile_coord()
 
+    def animate_text(self, dt):
+        text = "U DIED\nWOW\nWOW\nU DIED"
+        text = text.split(sep="\n")
+        i = self.text_animate_iterator
+        self.menu_title = "\n".join(text[0:i])
+
+        if self.text_animate_iterator < 5:
+            self.text_animate_iterator += 1
+        else:
+            self.text_animate_iterator = 0
+
     def button_clicked(self):
+        self.reset_game()
         self.is_game_started = True
+        self.menu_widget.opacity = 0
+        Clock.schedule_interval(self.animate_text, 0.5)
+        self.menu_button_title = "RESTART"
+
+    def on_button_change_speed(self, widget):
+        self.label_chosen_speed = "speed: \n" + widget.text
+        if widget.text == "Very Slow":
+            self.chosen_difficulty = 0
+        if widget.text == "Slow":
+            self.chosen_difficulty = 1
+        if widget.text == " Runnin\nin the 90s":
+            self.chosen_difficulty = 2
+        self.set_speed()
+
+    def set_speed(self):
+        base_speed = 0.3
+        difficulty_modif = self.chosen_difficulty * 2 / 10
+        self.ship_speed = (base_speed + difficulty_modif)/60  # basically 0.5/60 -- it's half of screen per second
+
+    def increment_speed(self, dt):
+        # need to drop to default after restart
+        self.ship_speed += 0.1 / 60
+
 
 class DeGameApp(App):
     pass
